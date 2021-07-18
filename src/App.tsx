@@ -1,13 +1,15 @@
-import { CircularProgress, makeStyles, TablePagination, Typography, useScrollTrigger } from '@material-ui/core';
+import { CircularProgress, makeStyles, TablePagination, Typography } from '@material-ui/core';
 import React, { useEffect, useRef, useState } from 'react';
 import Search from './components/Search';
 import Feeds from './containers/Feeds';
 import FeedContextProvider, { FeedContext } from './contexts/FeedContext';
-import { fetchFeed } from './helpers/API';
+import { FeedResultResponse, fetchFeed } from './helpers/API';
 
 const useStyles = makeStyles((theme) => ({
   App: {
-    
+    display: 'grid',
+    gridTemplateRows: 'auto 1fr auto',
+    minHeight: '100vh'
   },
   Search: {
     width: '40rem',
@@ -23,7 +25,9 @@ const useStyles = makeStyles((theme) => ({
     zIndex: 10,
     left: '1rem',
     right: '1rem',
-    width: 'auto'
+    [theme.breakpoints.down('md')]: {
+      width: 'auto',
+    },
   },
   Search__Wrapper: {
     zIndex: 1,
@@ -40,31 +44,50 @@ const useStyles = makeStyles((theme) => ({
     justifyContent: 'center'
   },
   Message__Wrapper: {
+    gridRow: '2 span 3',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    height: '40rem'
   }
 }))
 
 function App() {
   const styles = useStyles()
-  const [list, setList] = useState<API.Feed.FeedItem[]>([])
+  const [list, setList] = useState<FeedResultResponse>({
+    data: [],
+    page: 0,
+    perPage: 0,
+    total: 0,
+    totalPage: 0})
   const [page, setPage] = useState(0)
-  const [isLoading, setLoading] = useState(false)
+  const [isLoading, setLoading] = useState(true)
   const [isSearchFixed, setSearchFixed] = useState(false)
-  const [rowPerPage, setRowPerPage] = useState(10)
-  const requestId = useRef<string>('')
+  const [rowPerPage, setRowPerPage] = useState(9)
+  const requestId = useRef('')
   const searchWrapperRef = useRef<HTMLDivElement>(null)
 
   function handlePageChange (event: React.MouseEvent<HTMLButtonElement, MouseEvent> | null, page: number) {
-    setPage(page)
+    setLoading(true)
+    fetchFeed({ request_id: requestId.current || '', page: page + 1, per_page: rowPerPage })
+      .then(({ id, result }) => {
+        setList(result)
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false))
   }
 
   function handleRowsPerPageChange (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | null) {
-    setRowPerPage(parseInt(event?.target.value || '10', 10))
+    const _rowPerPage = parseInt(event?.target.value || '9', 10)
+    setRowPerPage(_rowPerPage)
 
-    setPage(0)
+    setLoading(true)
+    fetchFeed({ request_id: requestId.current || '', per_page: _rowPerPage })
+      .then(({ id, result }) => {
+        setList(result)
+        setPage(0)
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false))
   }
 
   useEffect(() => {
@@ -73,7 +96,7 @@ function App() {
         setLoading(true)
         const { id, result } = await fetchFeed({ page: page + 1,  per_page: rowPerPage})
         requestId.current = id
-        setList(result.data)
+        setList(result)
       } catch (error) {
         console.error(error)
       } finally {
@@ -101,34 +124,38 @@ function App() {
   }, [])
 
   return (
-    <FeedContextProvider value={{ images: list, loading: isLoading }}>
+    <FeedContextProvider value={{ data: list, loading: isLoading, id: requestId.current }}>
       <FeedContext.Consumer>
-        {([ contextData ]) => (
-        <div className={styles.App}>
-          <div ref={searchWrapperRef} className={styles.Search__Wrapper}>
-            <Search className={[styles.Search, isSearchFixed && styles.Search__Fixed].join(' ')} elevation={isSearchFixed ? 4 : 0}/>
-          </div>
-          {
-            !contextData.loading && contextData.images.length ?
-            <>
-              <Feeds items={contextData.images}/>
+        {([ contextData ]) => {
+          if (contextData.id) requestId.current = contextData.id
 
-              <div className={styles.Pagination__Wrapper}>
-                <TablePagination component="div" count={list.length || 0} page={page} rowsPerPage={rowPerPage} onPageChange={handlePageChange} onRowsPerPageChange={handleRowsPerPageChange} rowsPerPageOptions={[5, 10, 20]}/>
+          return (
+            <div className={styles.App}>
+              <div ref={searchWrapperRef} className={styles.Search__Wrapper}>
+                <Search className={[styles.Search, isSearchFixed && styles.Search__Fixed].join(' ')} elevation={isSearchFixed ? 4 : 0}/>
               </div>
-            </>
-            :
-            contextData.loading ?
-            <div className={styles.Message__Wrapper}>
-              <CircularProgress color="primary"/>
+              {
+                !contextData.loading && contextData.data.data.length ?
+                <>
+                  <Feeds items={contextData.data.data}/>
+    
+                  <div className={styles.Pagination__Wrapper}>
+                    <TablePagination component="div" count={contextData.data.total || 0} page={contextData.data.page - 1} rowsPerPage={contextData.data.perPage} onPageChange={handlePageChange} onRowsPerPageChange={handleRowsPerPageChange} rowsPerPageOptions={[3, 6, 9, 12, 15, 18]}/>
+                  </div>
+                </>
+                :
+                contextData.loading ?
+                <div className={styles.Message__Wrapper}>
+                  <CircularProgress color="primary"/>
+                </div>
+                :
+                <div className={styles.Message__Wrapper}>
+                  <Typography>There is no data</Typography>
+                </div>
+              }
             </div>
-            :
-            <div className={styles.Message__Wrapper}>
-              <Typography>There is no data</Typography>
-            </div>
-          }
-        </div>
-        )}
+            )
+        }}
       </FeedContext.Consumer>
     </FeedContextProvider>
   );
