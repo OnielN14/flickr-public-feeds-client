@@ -63,7 +63,8 @@ function Search ({ className, elevation }: SearchProps) {
 
   function handelChipDelete (value: string) {
     const newSelected = [...selected]
-    setSelected(newSelected.splice(newSelected.indexOf(value), 1))
+    newSelected.splice(newSelected.indexOf(value), 1)
+    setSelected(newSelected)
   }
 
   return (
