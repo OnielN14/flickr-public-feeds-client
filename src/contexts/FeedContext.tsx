@@ -1,17 +1,27 @@
 import React, { createContext, useEffect, useReducer } from 'react'
+import { FeedResultResponse } from '../helpers/API'
 
 type Action = 
-| { type: 'UPDATE_IMAGE_LIST', payload: API.Feed.FeedItem[] }
+| { type: 'UPDATE_IMAGE_DATA', payload: FeedResultResponse }
 | { type: 'UPDATE_LOADING_STATE', payload: boolean }
+| { type: 'UPDATE_ID', payload: string }
 
 type FeedContextType = {
-  images: API.Feed.FeedItem[];
+  data: FeedResultResponse;
   loading: boolean;
+  id: string;
 }
 
 const initialState: FeedContextType = {
-  images: [],
-  loading: false
+  data: {
+    data: [],
+    page: 0,
+    perPage: 0,
+    total: 0,
+    totalPage: 0
+  },
+  loading: false,
+  id: ''
 }
 
 const FeedContext = createContext<[ FeedContextType, (action:Action) => any ]>([
@@ -20,16 +30,22 @@ const FeedContext = createContext<[ FeedContextType, (action:Action) => any ]>([
 
 const reducer: React.Reducer<FeedContextType, Action> = (state, action) => {
   switch (action.type) {
-    case 'UPDATE_IMAGE_LIST':
+    case 'UPDATE_IMAGE_DATA':
       return {
         ...state,
-        images: [...action.payload]
+        data: {...action.payload}
       }
 
     case 'UPDATE_LOADING_STATE':
       return {
         ...state,
         loading: action.payload
+      }
+
+    case 'UPDATE_ID':
+      return {
+        ...state,
+        id: action.payload
       }
   
     default:
@@ -49,12 +65,16 @@ const FeedContextProvider: React.FC<FeedContextProviderProps> = ({ children, val
   const [_, dispatcher] = reducerHook
 
   useEffect(() => {
-    dispatcher({ type: 'UPDATE_IMAGE_LIST', payload: value.images })
-  }, [value.images, dispatcher])
+    dispatcher({ type: 'UPDATE_IMAGE_DATA', payload: value.data })
+  }, [value.data, dispatcher])
 
   useEffect(() => {
     dispatcher({ type: 'UPDATE_LOADING_STATE', payload: value.loading })
   }, [value.loading, dispatcher])
+
+  useEffect(() => {
+    dispatcher({ type: 'UPDATE_ID', payload: value.id })
+  }, [value.id, dispatcher])
 
   return (
     <FeedContext.Provider value={reducerHook}>
