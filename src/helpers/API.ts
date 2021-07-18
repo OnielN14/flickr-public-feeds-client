@@ -1,21 +1,23 @@
 import axios from 'axios'
 
 type FeedParams = {
-  request_id?: number;
+  request_id?: string;
   per_page?: number;
   page?: number;
   tags?: string;
 }
 
-type FeedResponse = {
+export type FeedResultResponse = {
+  data: API.Feed.FeedItem[];
+  page: number;
+  perPage: number;
+  total: number;
+  totalPage: number;
+}
+
+export type FeedResponse = {
   id: string;
-  result: {
-    data: API.Feed.FeedItem[];
-    page: number;
-    perPage: number;
-    total: number;
-    totalPage: number;
-  }
+  result: FeedResultResponse;
 }
 
 export async function fetchFeed(params?: FeedParams) {
