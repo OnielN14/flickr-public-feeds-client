@@ -31,25 +31,19 @@ const useStyles = makeStyles((theme) => ({
   }
 }))
 
-export type FeedItemType = {
-  title: string;
-  image: string;
-  author: string;
-}
-
 export type FeedItemProps = {
-  data: FeedItemType;
+  data: API.Feed.FeedItem;
   className?: string
 }
 
 
-function FeedItem ({ className, data: { author, image, title } }: FeedItemProps) {
+function FeedItem ({ className, data: { author, media, title } }: FeedItemProps) {
   const styles = useStyles()
 
   return (
     <Card classes={{ root: [styles.FeedItems, className].join(' ') }} elevation={0}>
       <CardActionArea classes={{root: styles.FeedItems__Container}}>
-        <CardMedia component="img" classes={{root: styles.FeedItems__Media}} title={title} src={image}/>
+        <CardMedia component="img" classes={{root: styles.FeedItems__Media}} title={title} src={media.m}/>
         <CardContent className={styles.FeedItems__Content}>
           <Typography classes={{ root: styles.FeedItems__Title }} variant="h6">{title}</Typography>
           <Typography variant="caption">Author: {author}</Typography>

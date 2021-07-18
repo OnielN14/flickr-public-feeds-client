@@ -1,4 +1,4 @@
-import FeedItem, { FeedItemType } from "../components/FeedItem"
+import FeedItem from "../components/FeedItem"
 import { makeStyles } from '@material-ui/core'
 
 const useStyles = makeStyles((theme) => ({
@@ -14,7 +14,7 @@ const useStyles = makeStyles((theme) => ({
 }))
 
 type FeedsProps = {
-  items: Array<FeedItemType>
+  items: Array<API.Feed.FeedItem>
 }
 
 function Feeds ({ items }: FeedsProps) {
