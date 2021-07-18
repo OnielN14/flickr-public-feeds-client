@@ -1,15 +1,17 @@
 import React, { createContext, useEffect, useReducer } from 'react'
-import { FeedItemType } from '../components/FeedItem'
 
 type Action = 
-| { type: 'UPDATE_IMAGE_LIST', payload: FeedItemType[] }
+| { type: 'UPDATE_IMAGE_LIST', payload: API.Feed.FeedItem[] }
+| { type: 'UPDATE_LOADING_STATE', payload: boolean }
 
 type FeedContextType = {
-  images: FeedItemType[]
+  images: API.Feed.FeedItem[];
+  loading: boolean;
 }
 
 const initialState: FeedContextType = {
-  images: []
+  images: [],
+  loading: false
 }
 
 const FeedContext = createContext<[ FeedContextType, (action:Action) => any ]>([
@@ -22,6 +24,12 @@ const reducer: React.Reducer<FeedContextType, Action> = (state, action) => {
       return {
         ...state,
         images: [...action.payload]
+      }
+
+    case 'UPDATE_LOADING_STATE':
+      return {
+        ...state,
+        loading: action.payload
       }
   
     default:
@@ -43,6 +51,10 @@ const FeedContextProvider: React.FC<FeedContextProviderProps> = ({ children, val
   useEffect(() => {
     dispatcher({ type: 'UPDATE_IMAGE_LIST', payload: value.images })
   }, [value.images, dispatcher])
+
+  useEffect(() => {
+    dispatcher({ type: 'UPDATE_LOADING_STATE', payload: value.loading })
+  }, [value.loading, dispatcher])
 
   return (
     <FeedContext.Provider value={reducerHook}>
