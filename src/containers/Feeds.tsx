@@ -4,12 +4,13 @@ import { makeStyles } from '@material-ui/core'
 const useStyles = makeStyles((theme) => ({
   Feeds: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(20rem, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(25rem, 1fr))',
+    overflow: 'hidden'
   },
   FeedItem__Wrapper: {
   },
   FeedItem: {
-    height: '10rem'
+    maxHeight: '15rem'
   }
 }))
 
